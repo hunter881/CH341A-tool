@@ -26,6 +26,8 @@ namespace MAX7219
 	*/
 	int setDigits(const uint8_t *digits);
 
+	int writeSevenSegment(const uint8_t *digits, uint8_t intensity);
+
 	int initCascade(uint8_t intensity, uint8_t digitCount, unsigned int cascadeCount);
 	int setIntensityCascade(uint8_t intensity, unsigned int cascadeCount);
 	int setDigitCascade(unsigned int digitId, const uint8_t *digits, unsigned int cascadeCount);	

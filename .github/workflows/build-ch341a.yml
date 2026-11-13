@@ -1,0 +1,51 @@
+name: Build CH341A Tool 1.0.8a
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [max7219-1.0.8a]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    if: github.repository == 'hunter881/CH341A-tool' && github.ref == 'refs/heads/max7219-1.0.8a' && vars.CH341A_RUNNER_READY == 'true'
+    runs-on: [self-hosted, Windows, X64, ch341a-cppbuilder]
+    timeout-minutes: 25
+    env:
+      RAD_STUDIO_ROOT: ${{ vars.RAD_STUDIO_ROOT }}
+      CH341A_PROJECT: ${{ vars.CH341A_PROJECT }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          persist-credentials: false
+      - name: Build the migrated Win32 release
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if (!$env:RAD_STUDIO_ROOT -or !$env:CH341A_PROJECT) {
+            throw 'Set RAD_STUDIO_ROOT and CH341A_PROJECT in the repository Actions variables.'
+          }
+          $rsvars = Join-Path $env:RAD_STUDIO_ROOT 'bin\rsvars.bat'
+          if (!(Test-Path -LiteralPath $rsvars -PathType Leaf)) { throw "Missing $rsvars" }
+          $project = Join-Path $env:GITHUB_WORKSPACE $env:CH341A_PROJECT
+          if (!(Test-Path -LiteralPath $project -PathType Leaf)) { throw "Missing migrated project $project" }
+
+          $command = 'call "{0}" && msbuild "{1}" /t:Build /p:Config=Release /p:Platform=Win32 /nologo' -f $rsvars, $project
+          & cmd.exe /d /c $command
+          if ($LASTEXITCODE -ne 0) { throw "MSBuild failed ($LASTEXITCODE)" }
+
+          $executables = @(Get-ChildItem -LiteralPath $env:GITHUB_WORKSPACE -Recurse -Filter CH341A_tool.exe -File)
+          if ($executables.Count -ne 1) { throw "Expected one CH341A_tool.exe, found $($executables.Count)" }
+          $exe = $executables[0]
+          if ($exe.VersionInfo.ProductVersion -ne '1.0.8a') {
+            throw "Expected product version 1.0.8a, got $($exe.VersionInfo.ProductVersion)"
+          }
+          New-Item -ItemType Directory -Path build-artifact | Out-Null
+          Copy-Item -LiteralPath $exe.FullName,'CH341PAR\CH341PAR\CH341DLL.DLL','LICENSE' -Destination build-artifact
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: CH341A-Tool-1.0.8a-Win32
+          path: build-artifact/
+          if-no-files-found: error

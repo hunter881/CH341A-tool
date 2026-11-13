@@ -13,7 +13,7 @@ TfrmAbout *frmAbout = NULL;
 __fastcall TfrmAbout::TfrmAbout(TComponent* AOwner)
 	: TForm(AOwner)
 {
-	lblVersion->Caption = GetFileVer(Application->ExeName);
+	lblVersion->Caption = "1.0.8a";
 	lblBuildTimestamp->Caption = (AnsiString)__DATE__ + ", " __TIME__;
 	ProductName->Caption = Application->Title;
 

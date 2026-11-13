@@ -116,6 +116,20 @@ int MAX7219::setDigits(const uint8_t *digits)
 #endif
 }
 
+int MAX7219::writeSevenSegment(const uint8_t *digits, uint8_t intensity)
+{
+    if (writeReg(MAX7219_SHUTDOWN, 0x00) != 0 ||
+        writeReg(MAX7219_DISPLAY_TEST, 0x00) != 0 ||
+        writeReg(MAX7219_DECODE_MODE, 0xFF) != 0 ||
+        writeReg(MAX7219_SCAN_LIMIT, DIGITS - 1) != 0 ||
+        setIntensity(intensity) != 0 ||
+        setDigits(digits) != 0)
+    {
+        return -1;
+    }
+    return writeReg(MAX7219_SHUTDOWN, 0x01);
+}
+
 int MAX7219::initCascade(uint8_t intensity, uint8_t digitCount, unsigned int cascadeCount)
 {
 	int err = 0;
